@@ -46,7 +46,7 @@ from datafun_toolkit.logger import get_logger, log_header, log_path
 from dotenv import load_dotenv
 
 from streaming.core.utils import log_env_vars
-from streaming.data_validation.data_contract_case import (
+from streaming.data_validation.data_contract_beaderstadt import (
     PRODUCTS_REQUIRED_FIELDS,
     REGIONS_REQUIRED_FIELDS,
     REJECTED_SALES_FIELDNAMES,
