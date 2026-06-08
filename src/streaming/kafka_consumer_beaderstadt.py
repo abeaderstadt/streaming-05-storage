@@ -29,11 +29,8 @@ Date: 2026-05
 
 Terminal command to run this file from the root project folder:
 
-    uv run python -m streaming.kafka_consumer_case
+    uv run python -m streaming.kafka_consumer_beaderstadt
 
-OBS:
-  Don't edit this file - it should remain a working example.
-  Copy it, rename it consumer_yourname.py, and modify your copy.
 """
 
 # === DECLARE IMPORTS ===
@@ -89,7 +86,7 @@ ROOT_DIR: Final[Path] = Path.cwd()
 DATA_DIR: Final[Path] = ROOT_DIR / "data"
 OUTPUT_DIR: Final[Path] = DATA_DIR / "output"
 
-OUTPUT_CSV: Final[Path] = OUTPUT_DIR / "consumed_sales.csv"
+OUTPUT_CSV: Final[Path] = OUTPUT_DIR / "consumed_sales_beaderstadt.csv"
 OUTPUT_DB: Final[Path] = OUTPUT_DIR / "sales.duckdb"
 
 REGIONS_CSV: Final[Path] = DATA_DIR / "regions.csv"

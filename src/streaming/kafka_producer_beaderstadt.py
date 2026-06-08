@@ -16,11 +16,8 @@ Date: 2026-05
 
 Terminal command to run this file from the root project folder:
 
-    uv run python -m streaming.kafka_producer_case
+    uv run python -m streaming.kafka_producer_beaderstadt
 
-OBS:
-  Don't edit this file - it should remain a working example.
-  Copy it, rename it producer_yourname.py, and modify your copy.
 """
 
 # === DECLARE IMPORTS ===
