@@ -240,10 +240,28 @@ def load_reference_data() -> dict[str, float]:
     return region_lookup
 
 
+def load_discount_data() -> dict[str, float]:
+    """Load discount percentages by discount code."""
+    LOG.info("Loading discount reference data...")
+
+    discount_lookup: dict[str, float] = {
+        code: float(discount_pct)
+        for code, discount_pct in read_csv_as_lookup(
+            DISCOUNT_CODES_CSV,
+            key_field="discount_code",
+            value_field="discount_pct",
+        ).items()
+    }
+
+    LOG.info(f"Found {len(discount_lookup)} discount codes.")
+    return discount_lookup
+
+
 def process_message(
     row: dict[str, Any],
     *,
     region_lookup: dict[str, float],
+    discount_lookup: dict[str, float],
     stats: RunningStats,
 ) -> dict[str, Any] | None:
     """Process one consumed message.
@@ -256,6 +274,7 @@ def process_message(
     Arguments:
         row: A raw consumed Kafka message row.
         region_lookup: Tax rates by region_id.
+        discount_lookup: Discount percentages by discount code.
         stats: Running statistics accumulator.
 
     Returns:
@@ -268,7 +287,16 @@ def process_message(
         return None
 
     enriched = enrich_message(row, region_lookup)
+
+    discount_code = row.get("discount_code", "")
+    discount_pct = discount_lookup.get(discount_code, 0.0)
+    enriched["discount_amount"] = round(
+        enriched["subtotal"] * (discount_pct / 100),
+        2,
+    )
+
     LOG.info(f"subtotal={enriched['subtotal']}")
+    LOG.info(f"discount={enriched['discount_amount']}")
     LOG.info(f"tax={enriched['tax_amount']}")
     LOG.info(f"total={enriched['total']}")
     LOG.info(f"running_total={stats.total + enriched['total']:.2f}")
@@ -279,7 +307,11 @@ def process_message(
 
 
 def consume_messages(
-    consumer: Any, *, region_lookup: dict[str, float], stats: RunningStats
+    consumer: Any,
+    *,
+    region_lookup: dict[str, float],
+    discount_lookup: dict[str, float],
+    stats: RunningStats,
 ) -> tuple[int, int]:
     """Consume and process messages from the Kafka topic.
 
@@ -291,6 +323,7 @@ def consume_messages(
     Arguments:
         consumer: An open Kafka consumer subscribed to the topic.
         region_lookup: Tax rates by region_id.
+        discount_lookup: Discount percentages by discount code.
         stats: Running statistics accumulator.
 
     Returns:
@@ -319,6 +352,7 @@ def consume_messages(
         enriched = process_message(
             row,
             region_lookup=region_lookup,
+            discount_lookup=discount_lookup,
             stats=stats,
         )
 
@@ -415,6 +449,7 @@ def main() -> None:
 
     stats = initialize_output()
     region_lookup = load_reference_data()
+    discount_lookup = load_discount_data()
 
     consumed_count = 0
     skipped_count = 0
@@ -423,6 +458,7 @@ def main() -> None:
         consumed_count, skipped_count = consume_messages(
             consumer,
             region_lookup=region_lookup,
+            discount_lookup=discount_lookup,
             stats=stats,
         )
     finally:
