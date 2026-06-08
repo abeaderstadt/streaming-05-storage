@@ -112,6 +112,6 @@ retail environment, this field would help a business track how discounts
 affect revenue, measure promotion effectiveness, and understand how much
 money is being reduced through sales campaigns.
 
-The consumed messages also show how business intelligence can be created
-directly inside a streaming workflow by calculating metrics and
-categorizing orders during processing.
+Working through the streaming pipeline also made it a lot clearer how Kafka
+systems handle data in real time. This project really helped me better
+understand the process of going from ingestion, to validation, to enrichment, to storage.
