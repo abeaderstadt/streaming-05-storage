@@ -54,55 +54,64 @@ Reference tables used for validation and enrichment:
 
 ### Kafka Messages
 
-The producer sends each sales transaction as a Kafka message representing a single order.
+Each message sent by the producer represents a single sales transaction.
 
 Kafka topic: streaming-05-storage-beaderstadt
 
-The message key is region_id, which keeps messages grouped by region
-in the same partition for consistency.
+The message key is region_id, which keeps messages grouped by region in
+the same partition.
 
-The message structure stays the same, but the consumer enriches it
+The base message structure stays the same, but the consumer enriches each record
 with calculated fields like subtotal, tax_amount, and total.
-
-In Phase 4, I added updated my .env file to process 15 messages
-instead of 3 like the example. I also updated the output path in
-kafka_consumer_beaderstadt.py so my consumer writes to a custom CSV file instead
-of the example output. In Phase 5, I added a new derived field called
-discount_amount to my consumer to anmdwer a new business question.
 
 ### Consumer Processing
 
-The consumer receives sales transaction messages from Kafka one at a time.
-It validates required fields, calculates derived fields, and writes valid records
-to both a CSV file and a DuckDB database. The consumer processes up to 1000 messages,
-logs information about each order, and tracks running statistics such as total sales,
-average sale amount, minimum sale, and maximum sale. In addition to the original
-derived fields (subtotal, tax_amount, and total), the consumer also calculates
-a new discount_amount field using information from the discount reference table.
+The consumer reads messages from Kafka one at a time, validates required
+fields, calculates derived fields, and writes clean records into both a
+CSV file and a DuckDB database.
+
+It processes up to 1000 messages, logs each order as it comes in, and also
+tracks basic stats like total sales, average sale amount, min, and max.
+
+Along with the original derived fields (subtotal, tax_amount, and total),
+I added a new field called discount_amount. This is calculated using the
+discount percentage from the discount_codes.csv lookup table.
 
 ### Experiments
 
-In Phase 4, I increased the number of streamed messages from 3 to 15 and
-updated the output path so my results would be written to a custom CSV file.
-In Phase 5, I added a new derived field called discount_amount. This field uses
-the discount percentage from discount_codes.csv to calculate how much money was
-discounted on each order. This modification was made to answer a new business
-question about the impact of discounts on sales.
+In Phase 4, I increased the stream size from 3 messages to 15 so I could
+better see how the pipeline behaves with more realistic data. I also updated
+the output path so everything writes into my own custom CSV instead of the example file.
+
+In Phase 5, I added the discount_amount derived field. Even though the current
+dataset has discount_code values that result in 0.0 discounts across all rows,
+the logic is still fully in place and ready for real business data. This basically
+sets up the pipeline so that if discount codes do start getting used later, the
+system can already calculate their financial impact without any changes.
 
 ### Results
 
-When I ran the producer and consumer, all 15 messages were successfully
-processed and written to my custom CSV file and DuckDB database.
-The logs showed each order being consumed, enriched, and stored.
-The new discount_amount field was calculated and included with the enriched records.
+When I ran everything, all 15 messages were successfully processed and
+written into my custom CSV file and DuckDB database.
+
+The logs confirmed each order was consumed, enriched, and stored correctly.
+
+The new discount_amount field is included in every record, and right now
+it consistently shows 0.0 because no active discount values were
+applied in the dataset.
 
 ### Interpretation
 
-Compared to the original example, my project processes more messages and
-includes an additional derived field for business analysis. Watching messages
-move through Kafka helped me better understand how streaming pipelines validate,
-enrich, and store data in real time. The stream could help a business monitor sales
-activity as transactions occur instead of waiting for batch reports. By adding the
-discount_amount field, the business gains insight into how much revenue is being
-reduced through promotional discounts and can use that to determine the
-effectiveness of discount campaigns.
+Compared to the original example, my version processes more streamed data
+and adds an extra derived field that supports business analysis.
+
+Even though discount_amount is currently always 0.0, it still matters from
+a design standpoint. It shows that the pipeline is built to handle promotional
+pricing logic, and it makes the system more realistic and extensible. In a real
+retail environment, this field would help a business track how discounts
+affect revenue, measure promotion effectiveness, and understand how much
+money is being reduced through sales campaigns.
+
+The consumed messages also show how business intelligence can be created
+directly inside a streaming workflow by calculating metrics and
+categorizing orders during processing.
